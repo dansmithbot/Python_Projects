@@ -1,30 +1,40 @@
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./email.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+# Create table with class
+class User(db.Model):
+    __tablename__ = 'users'
+    username = db.Column(db.String(50), primary_key=True)
+    email = db.Column(db.String(50))
+
+# Create database
 with app.app_context():
-    drop_table = text('DROP TABLE IF EXISTS users;')
-    users_table = text(""" 
-    CREATE TABLE users(
-    username VARCHAR NOT NULL PRIMARY KEY,
-    email VARCHAR);
-    """)
-    data = text("""
-    INSERT INTO users
-    VALUES
-        ("dora", "dora@amazon.com"),
-        ("cansın", "cansın@google.com"),
-        ("sencer", "sencer@bmw.com"),
-        ("uras", "uras@mercedes.com"),
-	    ("ares", "ares@porche.com");
-        """)
-    db.session.execute(drop_table)
-    db.session.execute(users_table)
-    db.session.execute(data)
+    db.create_all()
+
+# Clean the old values
+
+    db.session.query(User).delete()
+    db.session.commit()
+    
+# Add sample values
+    users_data = [
+        {"username": "dora", "email": "dora@amazon.com"},
+        {"username": "cansın", "email": "cansın@google.com"},
+        {"username": "sencer", "email": "sencer@bmw.com"},
+        {"username": "uras", "email": "uras@mercedes.com"},
+        {"username": "ares", "email": "ares@porche.com"}
+    ]
+
+    for user_info in users_data:
+        user = User(username=user_info["username"], email=user_info["email"])
+        db.session.add(user)
+
     db.session.commit()
 
 def find_emails(keyword):
